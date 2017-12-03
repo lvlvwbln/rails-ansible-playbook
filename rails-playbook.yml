@@ -1,0 +1,98 @@
+---
+- hosts: serverTeste
+  become: yes
+  tasks:
+      - name: install essential packages
+        apt: pkg={{ item }} update_cache=yes cache_valid_time=3600
+        become: true
+        become_method: sudo
+        with_items:
+            - git-core
+            - curl
+            - zlib1g-dev
+            - build-essential
+            - libssl-dev
+            - libreadline-dev
+            - libyaml-dev
+            - libsqlite3-dev
+            - sqlite3
+            - libxml2-dev
+            - libxslt1-dev
+            - libcurl4-openssl-dev
+            - python-software-properties
+            - libffi-dev
+            - nodejs
+
+      - name: check if chruby is downloaded
+        shell: ls /tmp/chruby-0.3.9.tar.gz
+        register: chruby_downloaded
+        ignore_errors: yes
+
+      - name: download chruby
+        get_url:
+          url: https://github.com/postmodern/chruby/archive/v0.3.9.tar.gz
+          dest: /tmp
+        when: chruby_downloaded|failed
+
+      - name: check if chruby is unarchived
+        shell: ls /tmp/chruby-0.3.9
+        register: chruby_unarchived
+        ignore_errors: yes
+
+      - name: unarchive chruby
+        unarchive:
+          src: /tmp/chruby-0.3.9.tar.gz
+          dest: /tmp
+          remote_src: yes
+        register: chruby_unarchived
+        when: chruby_unarchived|failed
+
+      - name: check if chruby is installed
+        shell: which chruby
+        register: chruby_installed
+        ignore_errors: true
+
+      - name: build chruby
+        shell: make install
+        become: true
+        become_method: sudo
+        args:
+          chdir: /tmp/chruby-0.3.9
+        when: chruby_installed|failed
+
+      - name: check if ruby-install is downloaded
+        shell: ls /tmp/ruby-install-0.6.1.tar.gz
+        register: rubyinstall_downloaded
+        ignore_errors: yes
+
+      - name: download ruby-install
+        get_url:
+          url: https://github.com/postmodern/ruby-install/archive/v0.6.1.tar.gz
+          dest: /tmp
+        when: rubyinstall_downloaded|failed
+
+      - name: check if ruby-install is unarchived
+        shell: ls /tmp/ruby-install-0.6.1
+        register: rubyinstall_unarchived
+        ignore_errors: yes
+
+      - name: unarchive ruby-install
+        unarchive:
+          src: /tmp/ruby-install-0.6.1.tar.gz
+          dest: /tmp
+          remote_src: yes
+        register: rubyinstall_unarchived
+        when: rubyinstall_unarchived|failed
+
+      - name: check if ruby-install is installed
+        shell: which ruby-install
+        register: rubyinstall_installed
+        ignore_errors: true
+
+      - name: build ruby-install
+        shell: make install
+        become: true
+        become_method: sudo
+        args:
+          chdir: /tmp/ruby-install-0.6.1
+        when: rubyinstall_installed|failed
